@@ -7,7 +7,7 @@ class Simple2V:
    Linear model with two variables X and Y
     """
     
-    def __init__(self, L=32, dt=0.01, dx=1.0, D_x=0.0, D_y=0.0):
+    def __init__(self, L=32, dt=0.05, dx=1.0, D_x=0.0, D_y=0.0):
         # Grid parameters
         self.L = L
         self.dt = dt
@@ -134,75 +134,39 @@ def run_simulation(stim_type="target", offset=2, L=32, D_x=1, D_y=0.0, time_step
     else:
         raise ValueError("stim_type must be 'target' or 'other'")
     
-    # Set up visualization with 3D surface plots
-    fig = plt.figure(figsize=(10, 10))
-    ax1 = fig.add_subplot(1, 1, 1, projection='3d')
-    # ax2 = fig.add_subplot(1, 2, 2, projection='3d')
+    # Set up visualization
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     
     # Fixed color ranges
-    Z_min, Z_max = 0, 8.0
+    X_min, X_max = 0, 10.0
     Y_min, Y_max = 2, 3.0
     
-    # Create coordinate meshgrid
-    x = np.arange(0, L)
-    y = np.arange(0, L)
-    X_grid, Y_grid = np.meshgrid(x, y)
+    # Create plots
+    im1 = ax1.imshow(model.X, cmap='gray', origin='lower', vmin=X_min, vmax=X_max, interpolation='Gaussian')
+    ax1.set_title('X')
+    plt.colorbar(im1, ax=ax1)
     
-    # Create initial surface plots
-    surf1 = ax1.plot_surface(X_grid, Y_grid, model.X, cmap='hot', 
-                             vmin=0, vmax=10, 
-                             rstride=1, cstride=1, linewidth=0, antialiased=True)
-    ax1.set_title('Calcium (X)')
-    ax1.set_xlabel('X')
-    ax1.set_ylabel('Y')
-    ax1.set_zlabel('Concentration')
-    ax1.set_zlim(Z_min, Z_max)
-    ax1.view_init(elev=40, azim=30)
-
-    fig.colorbar(surf1, ax=ax1, shrink=0.5, aspect=5)
+    im2 = ax2.imshow(model.Y, cmap='viridis', origin='lower', vmin=Y_min, vmax=Y_max)
+    ax2.set_title('Y')
+    plt.colorbar(im2, ax=ax2)
     
-    # surf2 = ax2.plot_surface(X_grid, Y_grid, model.Y, cmap='viridis', 
-    #                          vmin=Y_min, vmax=Y_max,
-    #                          rstride=1, cstride=1, linewidth=0, antialiased=True)
-    # ax2.set_title('IP3 (Y)')
-    # ax2.set_xlabel('X')
-    # ax2.set_ylabel('Y')
-    # ax2.set_zlabel('Concentration')
-    # ax2.set_zlim(Y_min, Y_max)
-    # ax2.view_init(elev=60, azim=30)
-    # fig.colorbar(surf2, ax=ax2, shrink=0.5, aspect=5)
-    
-    # plt.tight_layout()
+    plt.tight_layout()
     
     # Run simulation
     for step in range(time_steps):
         model.step()
         
         if step % 5 == 0:
-            # Remove old surfaces
-            for collection in ax1.collections:
-                collection.remove()
-            # for collection in ax2.collections:
-            #     collection.remove()
-            
-            # Plot new surfaces
-            surf1 = ax1.plot_surface(X_grid, Y_grid, model.X, cmap='hot', 
-                                     vmin=0, vmax=10,
-                                     rstride=1, cstride=1, linewidth=0, antialiased=True)
-            ax1.set_title(f'Calcium (X) - Step {step}')
-            
-            # surf2 = ax2.plot_surface(X_grid, Y_grid, model.Y, cmap='viridis', 
-            #                          vmin=Y_min, vmax=Y_max,
-            #                          rstride=1, cstride=1, linewidth=0, antialiased=True)
-            # ax2.set_title(f'IP3 (Y) - Step {step}')
-            
+            im1.set_data(model.X)
+            im2.set_data(model.Y)
+            ax1.set_title(f'X - Step {step}')
+            ax2.set_title(f'Y - Step {step}')
             plt.pause(0.002)
             
-        if step % 1000 == 0:
+        if step % 500 == 0:
             print(f"Step {step}, X range: [{model.X.min():.2f}, {model.X.max():.2f}]")
     
     plt.show()
-    
     return model
 
 # Example usage
