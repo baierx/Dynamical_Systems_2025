@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# # Michaelis Menten & Hill Kinetics
+# 
+# Michaelis Menten (MM) and Hill kinetics in vitro (closed system). MM is nonlinear but monotonous. Hill with n>1 is nonlinear with a qualitative transition, the inflection point. Predict n=1 -> n=4 sigmoidal changes in open flow. Open flow and nonlinearity are the basic ingredients of every complex living systems. Concept: mathematical treatment of nonlinear functions.
+
+# In[ ]:
 
 
 import plotly.graph_objects as go
@@ -10,10 +14,11 @@ from numpy.random import default_rng
 from numpy import arange, linspace, meshgrid, zeros_like, gradient, array, logspace
 
 
-# In[2]:
+# ## Rate function definition
+# 
 
+# In[4]:
 
-## Function definition
 
 def menten_hill_kinetics(S, k_max, K_m, n):
     """
@@ -29,10 +34,11 @@ def menten_hill_kinetics(S, k_max, K_m, n):
     return rate
 
 
-# In[42]:
+# ## Basic Enzyme Kinetics
+# 
 
+# In[6]:
 
-# Basic Enzyme Kinetics
 
 # Parameters
 K_m   = 1
@@ -111,14 +117,13 @@ ax3.set_title(f'Rate Landscape\n(k_max={k_max}, K_m={K_m})')
 
 fig.colorbar(im3, ax=ax3, label='Rate', shrink=0.5)
 
-# Add contour lines
 contour_levels = [0.1, 0.3, 0.5, 0.7, 0.9]
 contours = ax3.contour(S, N, rate_landscape, levels=contour_levels, 
                        colors='white', alpha=0.7, linewidths=1)
 ax3.clabel(contours, inline=True, fontsize=8, fmt='%.1f')
 
 
-# 4. Derivative of Rate (S vs n)
+# 4. Derivative of Rate Landscape
 ax4 = fig.add_subplot(2, 2, 4)
 
 im4 = ax4.imshow(rate_landscape_gradient[1], extent=[S_values.min(), S_values.max(), 
@@ -149,15 +154,11 @@ print("1. n = 1: Classic hyperbolic Michaelis-Menten kinetics")
 print("2. n > 1: Positive cooperativity - sigmoidal curves")
 print("3. n >> 1: Switch-like behavior - very steep transition")
 print(f"5. Half-maximal rate at S = K_m = {K_m}")
-print("\n Change from hyperbolic (blue) to switch-like behavior")
+print("\n Change from hyperbolic (blue) to switch-like(orange, red) shape")
+print(' ')
 
 
-
-# In[ ]:
-
-
-
-
+# ## Interactive Slider widget
 
 # In[45]:
 
@@ -222,18 +223,6 @@ fig_animation = go.Figure(
 )
 
 fig_animation.show()
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
 
 
 

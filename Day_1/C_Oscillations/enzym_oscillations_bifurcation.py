@@ -265,7 +265,7 @@ if __name__ == "__main__":
     
     # Plot
     plot_bifurcation_diagram(a1_vals, S_mins, S_maxs, P_mins, P_maxs,
-                            save_filename='bifurcation_diagram_corrected.png',
+                            save_filename='bifurcation_diagram_oscillations.png',
                             oscillation_range=[0.63, 0.72])
     
     # Analyze

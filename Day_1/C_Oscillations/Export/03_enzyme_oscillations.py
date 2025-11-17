@@ -2,55 +2,15 @@
 # coding: utf-8
 
 # # Biochemical Oscillations
+# 
+# Starting with bistability, additional feedback inhibition leads to spontaneous oscillations and self-organised temporal order. Processes can switch autonomously and repeatedly. Adding features can increase the complexity of self organisation, the idea of a hierarchy. Concept: self-organised rhythms in living systems. 
 
-# In[58]:
+# In[1]:
 
 
 from scipy.integrate import solve_ivp
 from matplotlib.pyplot import subplots
-from numpy import linspace, around, var, ndarray
-from scipy.signal import find_peaks
-
-
-# In[63]:
-
-
-def plot_bifdiagram(results_min_f, results_max_f, 
-                    par_set):
-
-    N = len(results_min_f)
-
-    fig, ax = subplots(figsize=(6, 4))
-
-    for xe, ye in zip(par_set, results_max_f[0]):
-
-        if not isinstance(ye, ndarray):
-            ax.scatter(xe, ye, c='k', s=6, marker='D')
-        else:
-            ax.scatter([xe] * len(ye), ye, s=3, c='r', marker='D')
-
-    for xe, ye in zip(par_set, results_min_f[0]):
-
-        if not isinstance(ye, ndarray):
-            ax.scatter(xe, ye, c='gray', s=6, marker='d')
-        else:
-            ax.scatter([xe] * len(ye), ye, s=3, c='b', marker='d')
-
-
-    ax.set_xticks(linspace(par_set[0], par_set[-1], 5));
-    ax.set_xticklabels(around(linspace(par_set[0], par_set[-1], 5), 2), fontsize=16);
-    ax.set_xlabel('Parameter', fontsize=16)
-
-    ax.set_ylabel('Substrate', fontsize=14)
-
-    y_min, y_max = ax.get_ylim()
-
-    ax.set_yticks(linspace(y_min, y_max, 3));
-    ax.set_yticklabels(around(linspace(y_min, y_max, 3),2), fontsize=14);
-
-    fig.tight_layout()
-
-    return fig, ax
+import numpy as np
 
 
 # # Forward inhibition combined with feedback inhibition
@@ -58,7 +18,7 @@ def plot_bifdiagram(results_min_f, results_max_f,
 
 # ## Time Series
 
-# In[60]:
+# In[2]:
 
 
 def model(t, variables, a1, b1, a2, b2, k_max, K_m, k_i, n, m, q):
@@ -121,18 +81,17 @@ ax[0, 1].set_ylim(4, 14)
 fig.tight_layout()
 
 
-# In[50]:
+# In[3]:
 
 
-around((S[-1], P[-1]), 2)
+np.around((S[-1], P[-1]), 2)
 
 
 # ## State Space Nullclines
 
-# In[61]:
+# In[4]:
 
 
-import numpy as np
 import plotly.graph_objects as go
 from scipy.optimize import fsolve
 
@@ -232,7 +191,7 @@ for S, P in zip(S_values, P_S_null):
 
 fig.add_trace(go.Scatter(x=valid_S_S, y=valid_P_S, mode='lines',
                         name='S-nullcline (dS/dt=0)',
-                        line=dict(color='blue', width=3)))
+                        line=dict(color='blue', width=2)))
 
 # Plot P-nullcline
 valid_S_P = []
@@ -244,7 +203,7 @@ for S, P in zip(S_values, P_P_null):
 
 fig.add_trace(go.Scatter(x=valid_S_P, y=valid_P_P, mode='lines',
                         name='P-nullcline (dP/dt=0)',
-                        line=dict(color='red', width=3)))
+                        line=dict(color='red', width=2)))
 
 # Find fixed points (intersections)
 print("Finding fixed points...")
@@ -290,7 +249,7 @@ for i, (S, P) in enumerate(fixed_points):
 # Plot fixed points
 for i, (S, P) in enumerate(fixed_points):
     fig.add_trace(go.Scatter(x=[S], y=[P], mode='markers',
-                            marker=dict(size=15, color='green', symbol='circle',
+                            marker=dict(size=12, color='green', symbol='circle',
                                       line=dict(width=1, color='black')),
                             name=f'Fixed Point {i+1}'))
 
@@ -314,8 +273,8 @@ S_cycle = sol.y[0][-2000:]
 P_cycle = sol.y[1][-2000:]
 
 fig.add_trace(go.Scatter(x=S_cycle, y=P_cycle, mode='lines',
-                        name='Limit Cycle (simulation)',
-                        line=dict(color='black', width=1)))
+                        name='Oscillation',
+                        line=dict(color='black', width=4)))
 
 # Update layout
 fig.update_layout(
@@ -372,117 +331,12 @@ print("\nThe purple limit cycle shows sustained oscillations around the fixed po
 
 
 
-# ## Bifurcation Diagram
-
-# In[53]:
-
-
-# Bifurcation parameter set
-par_min, par_max, steps = 0.55, 0.7, 60
-# par_min, par_max, steps = 0.75, 0.63, 30
-
-par_set = linspace(par_min, par_max, steps)
-
-# Time array
-t_span = (0, 500)
-
-results_min_f      = dict()
-results_min_inds_f = dict()
-results_max_f      = dict()
-results_max_inds_f = dict()
-
-# Simulation "forward"
-for par in par_set:
-
-    solution = solve_ivp(model, t_span, y0, args=(par, b1, a2, b2, k_max, K_m, k_i, n, m, q,), method='BDF', max_step=0.1)
-
-    S = solution.y[0]
-    P = solution.y[1]
-
-    rows = S.size//2
-
-    series = S[rows//2:]
-
-    num = 0
-
-    if var(series) < 0.001:
-
-        if num not in results_min_f:
-
-            results_min_f[num]      = [series[-1]]
-            results_min_inds_f[num] = [0]    
-
-        else:
-            results_min_f[num].append(series[-1])
-            results_min_inds_f[num].append(0)    
-
-        if num not in results_max_f:
-
-            results_max_f[num]      = [series[-1]]
-            results_max_inds_f[num] = [0]    
-
-        else:
-            results_max_f[num].append(series[-1])
-            results_max_inds_f[num].append(0)    
-
-    else:
-
-        y_f_max_inds = find_peaks(series, distance=100)
-        y_f_maxs     = series[y_f_max_inds[0]]
-
-        y_f_min_inds = find_peaks(-series, distance=100)
-        y_f_mins     = series[y_f_min_inds[0]]
-
-        if num not in results_min_f:
-
-            results_min_f[num]      = [y_f_mins]
-            results_min_inds_f[num] = [y_f_min_inds]
-
-            results_max_f[num]      = [y_f_maxs]
-            results_max_inds_f[num] = [y_f_max_inds]
-
-        else:
-
-            results_min_f[num].append(y_f_mins)
-            results_min_inds_f[num].append(y_f_min_inds)
-
-            results_max_f[num].append(y_f_maxs)
-            results_max_inds_f[num].append(y_f_max_inds)
-
-
-    if par != par_set[-1]:
-
-        y0 = solution.y[:, -1]
-
-print('')
-print('Scan complete!', list(around(solution.y[:, -1],3)))
-print('')
-
-
-# In[64]:
-
-
-fig, ax = plot_bifdiagram(results_min_f, results_max_f, par_set)
-
-title_chars = 'Parameter a1'
-
-ax.set_xlabel(title_chars, fontsize=16);
-
-
-# In[ ]:
-
-
-
-
-
 # ## Oscillation animation 
 
-# In[65]:
+# In[5]:
 
 
-import numpy as np
 import plotly.graph_objects as go
-from scipy.integrate import solve_ivp
 
 # Your model definition
 def model(t, variables, a1, b1, a2, b2, k_max, K_m, k_i, n, m, q):
@@ -575,28 +429,6 @@ for i in range(len(t_sol)):
             fillcolor="green"
         )
     ]
-
-    # Add text annotations
-    # text_annotations = [
-    #     dict(
-    #         x=S_pos[0],
-    #         y=S_pos[1] - max(S_radius[i], P_radius[i])/15 - 0.8,
-    #         text=f"S: {S_sol[i]:.2f}",
-    #         showarrow=False,
-    #         font=dict(color="blue", size=12),
-    #         xref="x",
-    #         yref="y"
-    #     ),
-    #     dict(
-    #         x=P_pos[0],
-    #         y=P_pos[1] - max(S_radius[i], P_radius[i])/15 - 0.8,
-    #         text=f"P: {P_sol[i]:.2f}",
-    #         showarrow=False,
-    #         font=dict(color="red", size=12),
-    #         xref="x",
-    #         yref="y"
-    #     )
-    # ]
 
     frame = go.Frame(
         data=[],  # No scatter data
