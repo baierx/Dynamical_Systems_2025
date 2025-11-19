@@ -3,7 +3,7 @@
 
 # (C) Gerold Baier, University College London, 2025
 
-# # Model of N Coupled E-I Oscillators with pink noise
+# # Model of N Coupled E-I Oscillators in two spatial Dimension
 # 
 
 # ## Import
@@ -298,7 +298,7 @@ def create_sparse_coupling_matrix(N):
 
 # ## Time Series with Periodic Perturbation
 
-# In[129]:
+# In[34]:
 
 
 # Number of oscillators
@@ -311,7 +311,7 @@ h_ex_0 = -6.35
 h_in_0 = -4.0
 
 eps          = 0.01
-RANDOM_STATE = 11111
+RANDOM_STATE = 1111
 seed(RANDOM_STATE)
 random_vals        = eps*normal(0,1,size=N)
 random_vals_sorted = sort(random_vals)
@@ -320,17 +320,18 @@ h_in_rand = h_in_0 - eps*normal(0,1,size=N)
 
 h_centre_index = ravel_multi_index(((rows-1)//2, (cols-1)//2), (rows, cols))
 
-h_ex_rand[h_centre_index] = h_ex_0
+# h_ex_rand[h_centre_index] = h_ex_0
 
 # Parameters
 
-pars = (1, 1.5, 10, 0) # Slow Homoclinic
+pars = (1, 2, 10, 0) # Even Slower Homoclinic
+# pars = (1, 1.5, 10, 0) # Slow Homoclinic
 # pars = (1, 1, 10, 0) # Fast SNIC
 # t_ex, t_in, c2, c4
 
 coupling_strength_EE, coupling_strength_EI = 5., 10.
 
-frac_EE, frac_EI = 0.26, 0.0
+frac_EE, frac_EI = 0.3, 0.0
 
 # Coupling
 coupling_matrix_EE_ini = create_sparse_coupling_matrix(N)
@@ -343,18 +344,19 @@ fill_diagonal(coupling_matrix_EE, 1)
 fill_diagonal(coupling_matrix_EI, 1)
 
 # Time array
-time_stop = 20
+time_stop = 30
 sr        = 1000
 samples   = time_stop*sr
 time      = linspace(start=0, stop=time_stop, num=samples)
 
 freq      = 0.3
-pulse_wid = 1.3
-pulse_amp = 6.0
+pulse_wid = 2  
+pulse_amp = 10.0
 
 # Initial conditions:
-# y_ini = normal(size=2*N)*0.1
-y_ini = y_pert[-1, :]
+seed(139)
+y_ini = normal(size=2*N)
+# y_ini = y_pert[-1, :]
 
 pert      = h_ex_0 + pulse_amp*ss.rect(mod(time, 1/freq)-(1/freq)/2-pulse_wid/2, pulse_wid)
 
@@ -371,15 +373,11 @@ y_pert    = odeint(func=N_oscillators, y0=y_ini, t=time,
 
 print('Complete')
 
-
-# In[130]:
-
-
 y_unfiltered = y_pert[:,::2]
 
 start, stop = 0, y_pert.shape[0]
 
-offset = 60
+offset = 30
 
 vmin, vmax = -3., -0
 
@@ -427,18 +425,19 @@ fig.tight_layout()
 
 
 
-# In[128]:
+# In[ ]:
 
 
-fig, ax = subplots(figsize=(6, 3))
-
-ax.plot(y_unfiltered[:, h_centre_index], c='b');
-ax.plot(y_unfiltered[:, h_centre_index]-3, c='r');
-
-ax.plot(pert, c='gray');
 
 
-# In[131]:
+
+# In[ ]:
+
+
+
+
+
+# In[35]:
 
 
 import matplotlib.pyplot as plt
