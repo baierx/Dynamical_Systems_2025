@@ -18,7 +18,7 @@ class SimpleCICR2D:
         self.D_y = D_y  # IP3 diffusion
         
         # Model parameters
-        self.a  = 0.32
+        self.a  = 0.33
         self.m2 = 20
         self.m3 = 23
         self.ka = 0.8
@@ -227,6 +227,6 @@ def run_simulation(stim_type="target", amplitude=1.5, frequency=0.1, radius=5, p
 if __name__ == "__main__":
     print("2D CICR Model - without or with Stimulation")
     
-    run_simulation(stim_type="spiral", amplitude=0.0, frequency=0.15, 
+    run_simulation(stim_type="spiral", amplitude=1.0, frequency=0.11, 
                           radius=3, phase_shift=0.0*np.pi, D_x=0.5, D_y=0.0) # target: amplitude=1.0, frequency=0.11, radius=3, phase_shift=0.3
 
