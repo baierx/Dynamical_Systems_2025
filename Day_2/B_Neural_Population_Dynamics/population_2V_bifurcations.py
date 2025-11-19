@@ -257,10 +257,12 @@ if __name__ == "__main__":
     )
     
     # Plot
-    plot_bifurcation_diagram(h_ex_vals, Ex_mins, Ex_maxs, In_mins, In_maxs,
+    fig = plot_bifurcation_diagram(h_ex_vals, Ex_mins, Ex_maxs, In_mins, In_maxs,
                             save_filename='EI_bifurcation_diagram.png',
                             oscillation_range=[-6.95, 6.8])
     
+    fig.savefig('Bifurcations_2V.png', format='png')
+
     # Analyze
     analyze_oscillations(h_ex_vals, Ex_mins, Ex_maxs, In_mins, In_maxs)
     

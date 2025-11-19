@@ -1,24 +1,108 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# # The Neural Population Oscillator
+# 
+# On the neural population level, the mesoscopic currents are modelled by the interaction of excitatory and inhibitory populations.
+# 
+# The predict oscillatory dynamics of e.g. the local field potential and the EEG.
+# 
+
 # In[1]:
 
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy import array, tanh
+from numpy import linspace, tanh, around
+from matplotlib.pyplot import subplots
+from scipy.integrate import odeint
+
+
+# In[2]:
+
+
+def sigmoid(u):
+    return tanh(u)
+
+def oscillator(y, t, h_ex, h_in, pars, sr, time_stop):
+
+    tau_ex, tau_in, c2, c4, c_EE, c_EI = pars
+
+    dydt = (
+
+        (h_ex - y[0] - c2*sigmoid(y[1]) + c_EE*sigmoid(y[0]))*tau_ex,
+
+        (h_in - y[1] - c4*sigmoid(y[1]) + c_EI*sigmoid(y[0]))*tau_in
+
+    )
+
+    return dydt
+
+
+
+# In[3]:
+
+
+# Input parameter
+h_ex_0 = -7.
+h_in_0 = -4.0
+
+# Oscillator parameters
+pars = (1, 2.5, 10, 0, 5, 10) # Homoclinic
+
+# Initial conditions
+y_ini = (1.088, 1.071)
+
+# Time array
+time_stop = 10
+sr        = 1000
+time      = linspace(start=0, stop=time_stop, num=time_stop*sr)
+
+pulse = []
+
+# Simulation
+y = odeint(func=oscillator, y0=y_ini, t=time, 
+          args=(h_ex_0, h_in_0, pars, sr, time_stop), 
+          hmax=0.1)
+
+fig, ax = subplots(ncols=2, figsize=(8, 3))
+
+ax[0].plot(time, y[:,0], color='red', label='Excitatory');
+ax[0].plot(time, y[:,1], color='deepskyblue', label='Inhibitory');
+ax[1].plot(y[:,1], y[:,0], color='magenta');
+ax[0].legend(loc='lower right')
+ax[0].set_xlabel('Time')
+ax[1].set_xlabel('Inhibitory')
+ax[1].set_ylabel('Excitatory')
+
+
+chars = 'Population Oscillations'
+
+fig.suptitle(chars)
+
+fig.tight_layout()
+
+# Show final values of all variables
+print('End of run:', around(y[-1,:],3))
+print('')
+
+
+# In[ ]:
+
+
+
 
 
 # # Quiver 2V analysis
 
-# In[9]:
+# In[7]:
 
 
 def dX_dt(X):
     """ Return the rates at all positions. """
     h_ex, h_in, tau_ex, tau_in, c2, c4, c_EE, c_EI = (-7.1, -4., 1, 1.5, 10, 0, 5, 10)  # SNIC
 
-    return array([ (h_ex - X[0] - c2*tanh(X[1]) + c_EE*tanh(X[0]))*tau_ex,
+    return np.array([ (h_ex - X[0] - c2*tanh(X[1]) + c_EE*tanh(X[0]))*tau_ex,
                    (h_in - X[1] - c4*tanh(X[1]) + c_EI*tanh(X[0]))*tau_in
                  ])
 
@@ -39,73 +123,50 @@ for i in range(X.shape[0]):
         DY[i,j] = dX[1]
         magnitudes[i,j] = np.sqrt(dX[0]**2 + dX[1]**2)  # Calculate magnitude
 
-# Create plot
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-
-# Plot 1: Colored arrows by magnitude
-q1 = ax1.quiver(X, Y, DX, DY, magnitudes, 
-               cmap='viridis', 
-               angles='xy', 
-               scale_units='xy', 
-               scale=50,
-               width=0.005)
-
-# Add colorbar for magnitudes
-cbar1 = plt.colorbar(q1, ax=ax1)
-cbar1.set_label('Speed (magnitude)')
-
-# Plot streamlines with color mapping to magnitude
-strm = ax1.streamplot(X, Y, DX, DY, color=magnitudes, cmap='plasma', 
-                     linewidth=1.5, density=1.2, arrowstyle='->')
-
 # Add nullclines
 x_nc = np.linspace(-10, 10, 100)
-y_nc = np.linspace(-20, 10, 100)
+y_nc = np.linspace(-15, 10, 100)
 X_nc, Y_nc = np.meshgrid(x_nc, y_nc)
 
+# dx/dt = 0 nullcline
 dX_null = np.zeros_like(X_nc)
-dY_null = np.zeros_like(Y_nc)
 for i in range(X_nc.shape[0]):
     for j in range(X_nc.shape[1]):
-        dX_val = dX_dt([X_nc[i,j], Y_nc[i,j]])
-        dX_null[i,j] = dX_val[0]
-        dY_null[i,j] = dX_val[1]
+        dX_null[i,j] = dX_dt([X_nc[i,j], Y_nc[i,j]])[0]
 
-ax1.contour(X_nc, Y_nc, dX_null, levels=[0], colors='black', linewidths=2, linestyles='--', alpha=0.8)
-ax1.contour(X_nc, Y_nc, dY_null, levels=[0], colors='green', linewidths=2, linestyles='--', alpha=0.8)
+# dy/dt = 0 nullcline  
+dY_null = np.zeros_like(Y_nc)
+for i in range(Y_nc.shape[0]):
+    for j in range(Y_nc.shape[1]):
+        dY_null[i,j] = dX_dt([X_nc[i,j], Y_nc[i,j]])[1]
 
-ax1.set_xlabel('Ex')
-ax1.set_ylabel('In')
-ax1.set_title('Vector Field Colored by Speed\n(Dark blue = slow, Yellow = fast)')
-ax1.set_xlim([-10, 10])
-ax1.set_ylim([-20, 10])
-ax1.grid(True, alpha=0.3)
-ax1.set_aspect('equal')
+# Create plot
+fig, ax1 = plt.subplots(figsize=(16, 6))
 
-# Plot 2: Just the magnitude as a heatmap with arrows
-im = ax2.imshow(magnitudes, extent=[-10, 10, -20, 10], 
+# The magnitude as a heatmap with arrows
+im = ax1.imshow(magnitudes, extent=[-10, 10, -20, 10], 
                origin='lower', cmap='hot', alpha=0.7)
-q2 = ax2.quiver(X, Y, DX, DY, color='white', 
+q1 = ax1.quiver(X, Y, DX, DY, color='white', 
                angles='xy', scale_units='xy', scale=50,
                width=0.004, alpha=0.8)
 
 # Add colorbar for heatmap
-cbar2 = plt.colorbar(im, ax=ax2)
-cbar2.set_label('Speed (magnitude)')
+cbar1 = plt.colorbar(im, ax=ax1, shrink=0.5)
+cbar1.set_label('Speed (magnitude)')
 
 # Add nullclines to second plot
-ax2.contour(X_nc, Y_nc, dX_null, levels=[0], colors='cyan', linewidths=2, linestyles='--', alpha=0.8)
-ax2.contour(X_nc, Y_nc, dY_null, levels=[0], colors='lime', linewidths=2, linestyles='--', alpha=0.8)
+ax1.contour(X_nc, Y_nc, dX_null, levels=[0], colors='cyan', linewidths=2, linestyles='--', alpha=0.8)
+ax1.contour(X_nc, Y_nc, dY_null, levels=[0], colors='lime', linewidths=2, linestyles='--', alpha=0.8)
 
-ax2.set_xlabel('Ex')
-ax2.set_ylabel('In')
-ax2.set_title('Speed Heatmap with Vector Overlay\n(Dark = slow, Bright = fast)')
-ax2.set_xlim([-10, 10])
-ax2.set_ylim([-20, 10])
-ax2.set_aspect('equal')
+ax1.set_xlabel('Ex')
+ax1.set_ylabel('In')
+ax1.set_title('Speed Heatmap with Vector Overlay\n(Dark = slow, Bright = fast)')
+ax1.set_xlim([-10, 10])
+ax1.set_ylim([-20, 10])
+ax1.set_aspect('equal')
 
-plt.tight_layout()
-# plt.show()
+# plt.tight_layout()
+plt.show()
 
 # Print some statistics about the speeds
 print(f"Speed statistics:")
@@ -121,14 +182,14 @@ print(f"Areas with speed < {magnitudes.mean()/2:.4f} represent slow dynamics")
 
 
 
-# In[11]:
+# In[8]:
 
 
 def dX_dt(X):
     """ Return the rates at all positions. """
     h_ex, h_in, tau_ex, tau_in, c2, c4, c_EE, c_EI = (-7.1, -4., 1, 1.5, 10, 0, 5, 10)
 
-    return array([ (h_ex - X[0] - c2*tanh(X[1]) + c_EE*tanh(X[0]))*tau_ex,
+    return np.array([ (h_ex - X[0] - c2*tanh(X[1]) + c_EE*tanh(X[0]))*tau_ex,
                    (h_in - X[1] - c4*tanh(X[1]) + c_EI*tanh(X[0]))*tau_in
                  ])
 

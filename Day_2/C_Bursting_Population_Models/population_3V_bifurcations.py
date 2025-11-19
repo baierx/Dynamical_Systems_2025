@@ -749,7 +749,7 @@ if __name__ == "__main__":
                                    save_filename='EI_bifurcation_diagram.png',
                                    oscillation_range=[-2.45, -0.3])
     
-    fig.savefig('Bursting_Bifurcations.png', format='png')
+    fig.savefig('Bifurcations_Bursting.png', format='png')
 
     # Analyze
     # analyze_oscillations(h_ex_values, Ex_extrema, In_1_extrema, In_2_extrema)

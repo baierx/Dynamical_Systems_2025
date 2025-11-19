@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# # Neural Population Bursting
+# 
+# With inhibitory populations operating on different time scales, bursting activity is observed in neural population models.
+# It consists of a main oscillation on which secondary fast oscillations are imposed.
 
-
-
-
-
-# # 3V Bursting
-
-# In[2]:
+# In[5]:
 
 
 import numpy as np
@@ -18,12 +15,12 @@ from scipy.integrate import solve_ivp
 from numpy import tanh as sigmoid
 
 
-# In[27]:
+# In[6]:
 
 
 def bursting_system(t, y):
     h_ex, h_in_1, h_in_2, tau_ex, tau_in1, tau_in2, c1, c2, c3, c4, c5, c6, c7 = (
-        -2.0, -4.5, 0.5, 1, 2.0, 0.01, 12, 10, 10, 2, 5, 5, 3)
+        -2.5, -4.5, 0.5, 1, 2.0, 0.01, 12, 10, 10, 2, 5, 5, 3)
 
     return [
         (h_ex   - y[0] + c1*sigmoid(y[0]) - c2*sigmoid(y[1]) - c7*sigmoid(y[2])) * tau_ex,
@@ -32,21 +29,20 @@ def bursting_system(t, y):
     ]
 
 # Integrate the system
-rng = np.random.default_rng(12345)
-y_ini = rng.uniform(size=3)
-y_ini = [-3.11490591, -12.46208934,  -0.31523448]
+y_ini = [0.359, -12.325,  2]
+# y_ini = [0.359, -12.325,  -2]
 
-t_end  = 300
+t_end  = 60
 t_span = (0, t_end)
 t_eval = np.linspace(0, t_end, 10000)
-sol = solve_ivp(bursting_system, t_span, y_ini, t_eval=t_eval, method='RK45')
+sol = solve_ivp(bursting_system, t_span, y_ini, t_eval=t_eval, method='RK45', max_step=0.05)
 
 # Create comprehensive visualization
-fig = plt.figure(figsize=(10, 6))
+fig = plt.figure(figsize=(8, 4))
 
 # 1. Time series - all variables
 ax1 = plt.subplot(1, 2, 1)
-plt.plot(sol.t, sol.y[0], 'tomato', label='Ex', linewidth=1)
+plt.plot(sol.t, sol.y[0], 'red', label='Ex', linewidth=1)
 # plt.plot(sol.t, sol.y[1], 'g-', label='Medium (y₁)', linewidth=1) 
 # plt.plot(sol.t, sol.y[2], 'b-', label='Slow (y₂)', linewidth=2)
 plt.ylabel('State Variables')
@@ -56,134 +52,33 @@ plt.grid(True, alpha=0.3)
 
 
 # 3. 3D Phase Space
-ax3 = plt.subplot(1, 2, 2, projection='3d')
-# To Color by time:
-# colors = plt.cm.viridis(np.linspace(0, 1, len(sol.t)))
-ax3.scatter(sol.y[0], sol.y[1], sol.y[2], c='deepskyblue', s=1, alpha=0.6)
-ax3.set_xlabel('Ex')
-ax3.set_ylabel('In_1') 
-ax3.set_zlabel('In_2')
-ax3.set_title('3D Phase Space')
+ax2 = plt.subplot(1, 2, 2, projection='3d')
+ax2.scatter(sol.y[0], sol.y[1], sol.y[2], c='deepskyblue', s=1, alpha=0.6)
+ax2.set_xlabel('Ex')
+ax2.set_ylabel('In_1') 
+ax2.set_zlabel('In_2')
+ax2.set_title('3D Phase Space')
 
 plt.tight_layout()
 plt.show()
 
 
-# In[18]:
+# In[ ]:
 
 
-sol.y[:, -1]
+
+
+
+# In[7]:
+
+
+from numpy import around
+around(sol.y[:, -1], 3)
 
 
 # # 3D Interactive Plot
 
-# In[28]:
-
-
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import numpy as np
-from scipy.integrate import solve_ivp
-from numpy import tanh as sigmoid
-
-def bursting_system(t, y):
-    h_ex, h_in_1, h_in_2, tau_ex, tau_in1, tau_in2, c1, c2, c3, c4, c5, c6, c7 = (
-        -2.0, -4.5, 0.5, 1, 2.2, 0.01, 12, 10, 10, 2, 5, 5, 3)
-
-    return [
-        (h_ex  - y[0] + c1*sigmoid(y[0]) - c2*sigmoid(y[1]) - c7*sigmoid(y[2])) * tau_ex,
-        (h_in_1 - y[1] + c3*sigmoid(y[0]) - c4*sigmoid(y[1])) * tau_in1, 
-        (h_in_2 - y[2] + c5*sigmoid(y[0]) - c6*sigmoid(y[2])) * tau_in2
-    ]
-
-# Integrate the system
-rng = np.random.default_rng(12345)
-y_ini = rng.uniform(size=3)
-y_ini = [-3.13127628, -12.46379042,  -0.45491688]
-t_span = (0, 2000)
-t_eval = np.linspace(0, 2000, 10000)
-sol = solve_ivp(bursting_system, t_span, y_ini, t_eval=t_eval, method='RK45', max_step=0.05)
-
-# Calculate instantaneous speeds (magnitude of velocity vector)
-def calculate_speeds(sol):
-    speeds = np.zeros(len(sol.t))
-    for i in range(len(sol.t)):
-        dydt = bursting_system(sol.t[i], sol.y[:, i])
-        speeds[i] = np.sqrt(dydt[0]**2 + dydt[1]**2 + dydt[2]**2)
-    return speeds
-
-speeds = calculate_speeds(sol)
-
-print(f"Speed statistics:")
-print(f"Min: {speeds.min():.3f}, Max: {speeds.max():.3f}, Mean: {speeds.mean():.3f}")
-
-
-# Create a third plot focusing on the speed structure with better visibility
-fig_speed_focus = go.Figure()
-
-# Use lines only for cleaner visualization of the structure
-fig_speed_focus.add_trace(go.Scatter3d(
-    x=sol.y[0], y=sol.y[1], z=sol.y[2],
-    mode='lines',
-    line=dict(
-        color=speeds,
-        colorscale='Hot',
-        width=6,
-        showscale=True,
-        colorbar=dict(title="Speed")
-    ),
-    name='Speed-colored trajectory'
-))
-
-fig_speed_focus.update_layout(
-    title=dict(
-        text="Bursting Structure - Coloured by Speed<br>"
-             "<sub>white = fast, dark = slow</sub>",
-        x=0.5
-    ),
-    scene=dict(
-        xaxis_title='Ex',
-        yaxis_title='In_1',
-        zaxis_title='In_2',
-        camera=dict(
-            eye=dict(x=1.8, y=1.8, z=1.8)
-        )
-    ),
-    width=1000,
-    height=800
-)
-
-fig_speed_focus.show()
-
-# fig_speed_focus.write_html("bursting_3D_interactive.html")
-
-# Print some insights about the structure
-print("\n=== Structural Analysis ===")
-print(f"Trajectory range:")
-print(f"  Ex: [{sol.y[0].min():.2f}, {sol.y[0].max():.2f}]")
-print(f"  In_1: [{sol.y[1].min():.2f}, {sol.y[1].max():.2f}]")
-print(f"  In_2: [{sol.y[2].min():.2f}, {sol.y[2].max():.2f}]")
-
-# Detect bursting phases based on speed variations
-speed_threshold = speeds.mean() + 0.5 * speeds.std()
-bursting_mask = speeds > speed_threshold
-silent_mask = speeds <= speed_threshold
-
-print(f"\nDynamic phases:")
-print(f"  Bursting (fast): {np.sum(bursting_mask)} points ({np.mean(bursting_mask)*100:.1f}%)")
-print(f"  Silent (slow): {np.sum(silent_mask)} points ({np.mean(silent_mask)*100:.1f}%)")
-
-# Show where fast/slow regions are in state space
-print(f"\nFast dynamics typically occur when:")
-print(f"  In_2 ≈ {sol.y[2][bursting_mask].mean():.2f} ± {sol.y[2][bursting_mask].std():.2f}")
-print(f"Slow dynamics typically occur when:")
-print(f"  In_2 ≈ {sol.y[2][silent_mask].mean():.2f} ± {sol.y[2][silent_mask].std():.2f}")
-
-
-# # 3D With Slider
-
-# In[30]:
+# In[4]:
 
 
 import plotly.graph_objects as go

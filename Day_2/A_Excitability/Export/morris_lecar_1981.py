@@ -2,6 +2,13 @@
 # coding: utf-8
 
 # # The Morris Lecar Model
+# 
+# This two-variable model creates excitability in the same form as the Hogkkin-Huxley equations. It uses a Kirchhoff equation (similar to HH) for self-excitation and a (single) gating variable to repolarize. 
+# 
+# Two sigmoids are used as nonlinear functions. 
+# 
+# The model exhibits all dynamical feature of firing neurons. It can also be expanded to include further currencs (e.g. Calcium) and then shows spontaneous bursting.
+# 
 
 # In[2]:
 
@@ -61,8 +68,8 @@ class MorrisLecar:
 
         # Current calculations
         I_Ca = self.g_Ca * self.m_inf(V) * (V - self.E_Ca)
-        I_K  = self.g_K * w * (V - self.E_K)
-        I_L  = self.g_L * (V - self.E_L)
+        I_K  = self.g_K  * w * (V - self.E_K)
+        I_L  = self.g_L  * (V - self.E_L)
 
         # Differential equations
         dV_dt = (current - I_Ca - I_K - I_L) / self.C
